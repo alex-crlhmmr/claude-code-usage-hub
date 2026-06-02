@@ -27,8 +27,8 @@ git clone <this-repo> otel-claude && cd otel-claude
 (`.secrets.env`), starts everything, and arms **reboot + logout persistence**. It prints your
 hub's Tailscale name and the exact join command to give your devices. Re-running is safe.
 
-Manage it later: `./start.sh` (idempotent) · `./stop.sh`.
-Requirements: Linux, `curl`, `python3`, `tar`, and Tailscale installed/logged-in.
+Manage it later (systemd path): `systemctl --user status|restart|stop cc-collector cc-prometheus cc-grafana`.
+Requirements: Linux, `curl`, `python3`, `tar`, a user `systemd` instance (for auto-restart), and Tailscale installed/logged-in.
 
 ---
 
@@ -77,16 +77,19 @@ own login** — attribution follows the account a session is *launched* with.
 | Layer | Survives reboot? | Survives logout? | How |
 |-------|:----------------:|:----------------:|-----|
 | **Joined device** (the telemetry config) | ✅ all OSes | ✅ all OSes | It's in `settings.json`, read at every Claude Code launch — not shell env |
-| **Hub** (collector + Prometheus + Grafana) | ✅ | ✅ | `cron @reboot` (reboot) + `systemd` **linger** (logout) + detached `setsid` procs |
+| **Hub** (collector + Prometheus + Grafana) | ✅ | ✅ | systemd `--user` units, `Restart=always` (also auto-recovers a crash) + linger |
 | **Database** (metrics) | ✅ | ✅ | Prometheus TSDB on disk (`local/prom-data`), 365d retention |
 
 Notes:
 - **Joined device** persistence is the same on macOS / Linux / Windows because it's a config file.
   Only the *join method* differs (`.sh` vs `.ps1` vs manual block above).
-- **Hub logout-survival needs linger** (`setup-hub.sh` enables it; if it printed a sudo note, run
+- The hub runs as systemd `--user` services (`install-systemd.sh`, invoked by `setup-hub.sh`):
+  `Restart=always` auto-recovers a crashed component; **linger** starts them at boot without a
+  login. Manage: `systemctl --user status|restart cc-collector cc-prometheus cc-grafana`;
+  logs: `journalctl --user -u cc-collector -f`. (If systemd `--user` is unavailable, it falls
+  back to `setsid` + `cron @reboot`, which survives reboot/logout but not a mid-run crash.)
+- Logout-survival needs linger (auto-enabled; if a sudo note was printed, run
   `sudo loginctl enable-linger <user>` once).
-- `cron @reboot` only restarts the hub at *boot*. It does **not** auto-restart a process that
-  crashes mid-run; re-run `./start.sh` (idempotent) if a component dies.
 
 ---
 

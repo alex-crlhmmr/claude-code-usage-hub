@@ -48,17 +48,20 @@ if [ ! -f .secrets.env ]; then
   echo "Generated Grafana admin password -> .secrets.env (applied on first Grafana init)."
 fi
 
-chmod +x start.sh stop.sh join-fleet.sh query.py verify-fleet.py 2>/dev/null || true
-./start.sh
+chmod +x start.sh stop.sh join-fleet.sh query.py verify-fleet.py install-systemd.sh 2>/dev/null || true
 
-# --- persistence ---
-TMP=$(mktemp); crontab -l 2>/dev/null | grep -v 'otel-claude/start.sh' > "$TMP" || true
-echo "@reboot $ROOT/start.sh >> $ROOT/logs/boot.log 2>&1" >> "$TMP"
-crontab "$TMP" && rm -f "$TMP" && echo "Armed cron @reboot (survives reboot)."
-if loginctl enable-linger "$(id -un)" 2>/dev/null; then
-  echo "Enabled systemd linger (survives logout)."
+# --- start + persistence: prefer systemd --user (auto-restart on crash + boot), else setsid+cron ---
+if systemctl --user is-system-running >/dev/null 2>&1; then
+  echo "Using systemd --user (Restart=always crash recovery + boot via linger)."
+  ./install-systemd.sh
 else
-  echo "NOTE: for logout-survival run once:  sudo loginctl enable-linger $(id -un)"
+  echo "systemd --user unavailable; falling back to setsid + cron @reboot."
+  ./start.sh
+  TMP=$(mktemp); crontab -l 2>/dev/null | grep -v 'otel-claude/start.sh' > "$TMP" || true
+  echo "@reboot $ROOT/start.sh >> $ROOT/logs/boot.log 2>&1" >> "$TMP"
+  crontab "$TMP" && rm -f "$TMP" && echo "Armed cron @reboot (survives reboot)."
+  loginctl enable-linger "$(id -un)" 2>/dev/null && echo "Enabled linger (survives logout)." \
+    || echo "NOTE: for logout-survival run once:  sudo loginctl enable-linger $(id -un)"
 fi
 
 HUB_DNS="$(tailscale status --json 2>/dev/null | python3 -c 'import sys,json;print(json.load(sys.stdin).get("Self",{}).get("DNSName","").rstrip("."))' 2>/dev/null || true)"
