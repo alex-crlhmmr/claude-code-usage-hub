@@ -84,6 +84,7 @@ env.update({
     "OTEL_METRICS_EXPORTER": "otlp",
     "OTEL_LOGS_EXPORTER": "otlp",
     "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+    "OTEL_METRIC_EXPORT_INTERVAL": "10000",
     "OTEL_EXPORTER_OTLP_ENDPOINT": endpoint,
     "OTEL_RESOURCE_ATTRIBUTES": "device.name=%s,os.user=%s" % (dev, osu),
 })
