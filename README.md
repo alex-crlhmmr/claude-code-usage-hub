@@ -72,6 +72,47 @@ own login** — attribution follows the account a session is *launched* with.
 
 ---
 
+## B2. Reliable mode (optional) — never drop data during an outage
+
+By default a device sends telemetry **straight to the hub**. If the hub or network is
+unreachable, Claude Code buffers only in memory and then **drops** that usage (best-effort).
+Reliable mode runs a tiny local OTel Collector on the device that **spools to disk and
+forwards when the hub returns**:
+
+```
+Claude Code → local agent (localhost) → disk queue → hub
+                         └─ hub down? queue grows on disk, drains automatically later
+```
+
+Enable it on a device (Linux/macOS; instead of, or after, `join-fleet.sh`):
+```bash
+./install-device-agent.sh --hub YOUR-HUB.tailNNNN.ts.net   # then restart Claude Code
+```
+It downloads a small collector, installs it as an always-on service (systemd `--user` /
+launchd, auto-restart), points Claude Code at `localhost:4317`, and forwards to the hub with a
+persistent queue (`retry_on_failure` forever). An outage now **delays** delivery instead of
+losing it; the queue survives device reboots. See `device-agent-config.example.yaml`.
+
+### Do we ever lose usage data?
+**Reliable mode is effectively lossless for the common case (hub/network down) — but it is not an absolute guarantee.** Honest breakdown:
+
+| Scenario | Best-effort (direct) | Reliable mode (local agent) |
+|----------|----------------------|------------------------------|
+| Hub/network down minutes–hours | ❌ **dropped** | ✅ spooled to disk, delivered later |
+| Device reboots mid-outage | ❌ dropped | ✅ queue persists, resumes |
+| Hub down for days | ❌ dropped | ✅ until disk/queue fills, then oldest dropped |
+
+Residual gaps that **remain even in reliable mode** (no system avoids all of these):
+- **Local agent not running** the instant Claude exports → that batch drops after Claude's brief in-memory retry. (Mitigated: the agent is an auto-restart service and localhost delivery is near-instant.)
+- **Disk/queue full** during a very long outage → oldest data dropped (queue is bounded).
+- **Device-level loss** — if the device's disk dies (or the spool dir is wiped) before forwarding, queued data is gone.
+- **Hub TSDB loss** — if the hub's disk fails without a backup, stored history is gone (independent of device buffering).
+- **Device powered off** — no telemetry is generated while off, so nothing to lose; gaps there are expected, not lost work.
+
+Bottom line: reliable mode closes the big real-world hole (transient hub/network outages, like the ~100‑min gap that prompted this) and is durable across reboots. Treat it as **near‑lossless**, not a mathematical zero‑loss guarantee — for the latter you'd also need hub TSDB backups and per‑device disk redundancy.
+
+---
+
 ## C. Persistence — what survives reboot / logout
 
 | Layer | Survives reboot? | Survives logout? | How |
