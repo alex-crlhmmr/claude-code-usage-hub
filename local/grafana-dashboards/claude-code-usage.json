@@ -1,0 +1,374 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "liveNow": true,
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["claude-code", "usage"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "Claude Code — Usage by Account",
+  "uid": "claude-code-usage",
+  "templating": {
+    "list": [
+      {
+        "name": "account",
+        "label": "Account",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "ccprom" },
+        "definition": "label_values(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"}, user_email)",
+        "query": { "qryType": 1, "query": "label_values(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"}, user_email)", "refId": "acct" },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "name": "model",
+        "label": "Model",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "ccprom" },
+        "definition": "label_values(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"}, model)",
+        "query": { "qryType": 1, "query": "label_values(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\"}, model)", "refId": "mdl" },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Overview",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Total Cost",
+      "id": 1,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum(increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "legendFormat": "USD" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total Tokens",
+      "id": 2,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 1, "color": { "mode": "fixed", "fixedColor": "blue" } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background_solid", "graphMode": "area", "textMode": "value_and_name", "wideLayout": true
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "legendFormat": "tokens" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Output Tokens",
+      "id": 3,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 1, "color": { "mode": "fixed", "fixedColor": "purple" } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background_solid", "graphMode": "area", "textMode": "value_and_name", "wideLayout": true
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"output\", user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "legendFormat": "output" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Cache Read Tokens",
+      "id": 4,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 1, "color": { "mode": "fixed", "fixedColor": "orange" } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background_solid", "graphMode": "area", "textMode": "value_and_name", "wideLayout": true
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\", user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "legendFormat": "cacheRead" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Active Accounts",
+      "id": 5,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "yellow" } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background_solid", "graphMode": "none", "textMode": "value_and_name", "wideLayout": true
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "count(count by (user_account_uuid) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\"}[$__range]) > 0))",
+          "legendFormat": "accounts" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Active Time",
+      "id": 6,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "red" } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background_solid", "graphMode": "area", "textMode": "value_and_name", "wideLayout": true
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum(increase(claude_code_active_time_seconds_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\"}[$__range]))",
+          "legendFormat": "active" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Spend & Tokens Over Time",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "id": 101,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Cost per Account",
+      "id": 10,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "gradientMode": "hue",
+            "stacking": { "mode": "normal", "group": "A" }, "axisPlacement": "auto",
+            "lineInterpolation": "smooth", "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"], "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__interval]))",
+          "legendFormat": "{{user_email}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tokens per Account",
+      "id": 11,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "gradientMode": "hue",
+            "stacking": { "mode": "normal", "group": "A" }, "lineInterpolation": "smooth", "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"], "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__interval]))",
+          "legendFormat": "{{user_email}}" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Breakdowns",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "id": 102,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Spend Rate per Account ($/hr)",
+      "id": 20,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "fillOpacity": 25, "lineWidth": 2, "gradientMode": "opacity",
+            "lineInterpolation": "smooth", "showPoints": "never",
+            "stacking": { "mode": "none", "group": "A" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max"], "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum by (user_account_uuid, user_email) (rate(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__interval])) * 3600",
+          "legendFormat": "{{user_email}}" }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Tokens by Type",
+      "id": 21,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 17 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "legend": { "displayMode": "list", "placement": "bottom", "values": ["percent"], "showLegend": true },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single", "sort": "desc" },
+        "displayLabels": ["name"]
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum by (type) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "legendFormat": "{{type}}" }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Cost by Model",
+      "id": 22,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 17 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD", "decimals": 2,
+          "color": { "mode": "continuous-GrYlRd" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum by (model) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "legendFormat": "{{model}}" }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Tokens per Account",
+      "id": 30,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 25 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "continuous-BlPu" } },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient", "orientation": "horizontal", "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "legendFormat": "{{user_email}}" }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Cost per Account",
+      "id": 31,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 25 },
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "decimals": 2, "color": { "mode": "continuous-GrYlRd" } },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient", "orientation": "horizontal", "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "legendFormat": "{{user_email}}" }
+      ]
+    }
+  ]
+}

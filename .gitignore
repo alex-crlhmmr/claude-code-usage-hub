@@ -1,0 +1,19 @@
+# --- re-downloadable binaries & tarballs (~1.5 GB) ---
+/bin/
+/dl/
+
+# --- runtime state: logs, pids, metric databases ---
+/logs/
+/run/
+/local/prom-data/
+/local/grafana-data/
+/local/grafana-logs/
+
+# scratch
+*.output
+*.tmp
+
+# --- intentionally TRACKED (do not ignore) ---
+# configs:   *.yaml *.yml   |  scripts: *.sh *.py  |  .vers  |  README.md
+# dashboards: /local/grafana-dashboards/**
+# provisioning: /local/grafana-provisioning/**  (datasource + dashboard provider)
