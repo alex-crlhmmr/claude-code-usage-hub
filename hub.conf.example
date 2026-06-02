@@ -1,0 +1,2 @@
+# Copy to hub.conf and set your hub's Tailscale MagicDNS name (run: tailscale status).
+HUB_HOST=YOUR-HUB.tailNNNN.ts.net

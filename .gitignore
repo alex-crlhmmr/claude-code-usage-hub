@@ -25,3 +25,6 @@
 # python bytecode
 __pycache__/
 *.pyc
+
+# local hub identity (keep your Tailscale name out of git)
+hub.conf

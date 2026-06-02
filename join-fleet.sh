@@ -5,7 +5,10 @@
 # from the login; this only adds device.name + os.user and points at the hub.
 set -euo pipefail
 
-HUB_HOST="YOUR-HUB.tailNNNN.ts.net"   # MagicDNS — stable across hub Tailscale IP changes
+# Hub Tailscale MagicDNS name — override with --hub, env HUB_HOST, or a gitignored ./hub.conf.
+SELFDIR="$(cd "$(dirname "$0")" && pwd)"
+[ -f "$SELFDIR/hub.conf" ] && . "$SELFDIR/hub.conf"
+HUB_HOST="${HUB_HOST:-YOUR-HUB.tailNNNN.ts.net}"
 GRPC_PORT=4317
 HTTP_PORT=4318
 DEVICE_NAME=""
@@ -36,6 +39,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+case "$HUB_HOST" in *YOUR-HUB*) die "set your hub: ./join-fleet.sh --hub <your-hub.tailXXXX.ts.net>  (run 'tailscale status' on the hub to find it, or create ./hub.conf)";; esac
 command -v python3 >/dev/null 2>&1 || die "python3 is required"
 [ -n "$DEVICE_NAME" ] || DEVICE_NAME="$(hostname -s 2>/dev/null || hostname)"
 OS_USER="$(id -un)"

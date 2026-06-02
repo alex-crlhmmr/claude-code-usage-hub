@@ -1,6 +1,6 @@
 # join-fleet.ps1 — point this Windows device's Claude Code telemetry at the hub.
 # Usage (PowerShell):
-#   .\join-fleet.ps1 -Hub YOUR-HUB.tailNNNN.ts.net
+#   .\join-fleet.ps1 -Hub YOUR-HUB.tailNNNN.ts.net   (your hub's Tailscale name: run 'tailscale status')
 #   .\join-fleet.ps1 -DryRun          # preview the settings.json change, write nothing
 # NOTE: tested logic, but run with -DryRun first to confirm the merge on your machine.
 #       If anything looks off, use the manual settings.json block from the README instead.
@@ -11,6 +11,7 @@ param(
   [switch]$NoVerify
 )
 $ErrorActionPreference = "Stop"
+if ($Hub -like "*YOUR-HUB*") { Write-Error "Set your hub: .\join-fleet.ps1 -Hub <your-hub.tailXXXX.ts.net>  (run 'tailscale status')"; exit 1 }
 $grpc = 4317; $http = 4318
 $settings = Join-Path $env:USERPROFILE ".claude\settings.json"
 $osuser   = $env:USERNAME

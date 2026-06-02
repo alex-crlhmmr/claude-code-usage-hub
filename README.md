@@ -5,7 +5,7 @@ Self-hosted, no-Docker, no-sudo stack that tracks **Claude Code token/cost usage
 (collector + database + dashboards); other machines stream their Claude Code telemetry to it.
 
 ```
-  fleet devices (Mac / Linux / Windows)            HUB (one host, e.g. YOUR-HUB)
+  fleet devices (Mac / Linux / Windows)            HUB (one host)
   Claude Code, TELEMETRY=1        OTLP/gRPC        OTel Collector  :4317 / :4318
   + device.name + os.user   ───── over ─────►         └─ resource → label
   (account labels automatic)     Tailscale         Prometheus (TSDB) :9090   (365d)

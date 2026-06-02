@@ -10,7 +10,8 @@ mkdir -p logs run local/prom-data local/grafana-data local/grafana-logs
 
 PROM_DIR="bin/prometheus-${PROM_VER}.linux-amd64"
 GRAF_DIR="bin/grafana-v${GRAF_VER}"
-HUB_DNS="YOUR-HUB.tailNNNN.ts.net"   # MagicDNS — what fleet devices point at
+[ -f ./hub.conf ] && . ./hub.conf
+HUB_DNS="${HUB_HOST:-YOUR-HUB.tailNNNN.ts.net}"   # MagicDNS fleet devices point at (set in ./hub.conf)
 
 port_up(){ (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -q ":$1 "; }
 
