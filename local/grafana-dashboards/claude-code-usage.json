@@ -42,6 +42,20 @@
         "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
         "refresh": 2,
         "sort": 1
+      },
+      {
+        "name": "device",
+        "label": "Device",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "ccprom" },
+        "definition": "label_values(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", device_name=~\".+\"}, device_name)",
+        "query": { "qryType": 1, "query": "label_values(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", device_name=~\".+\"}, device_name)", "refId": "dev" },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "refresh": 2,
+        "sort": 1
       }
     ]
   },
@@ -368,6 +382,56 @@
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
           "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
           "legendFormat": "{{user_email}}" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Per Device (account × device)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "id": 103,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "title": "Tokens by Account × Device",
+      "id": 40,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "continuous-BlPu" } }, "overrides": [] },
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "label_replace(sum by (user_email, device_name) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range])), \"device_name\", \"(unset)\", \"device_name\", \"^$\")",
+          "legendFormat": "{{user_email}} @ {{device_name}}" }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Cost by Account × Device",
+      "id": 41,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 33 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 2, "color": { "mode": "continuous-GrYlRd" } }, "overrides": [] },
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "label_replace(sum by (user_email, device_name) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range])), \"device_name\", \"(unset)\", \"device_name\", \"^$\")",
+          "legendFormat": "{{user_email}} @ {{device_name}}" }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Top Devices by Cost",
+      "id": 42,
+      "datasource": { "type": "prometheus", "uid": "ccprom" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 41 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 2, "color": { "mode": "continuous-GrYlRd" } }, "overrides": [] },
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
+          "expr": "label_replace(sum by (device_name) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range])), \"device_name\", \"(unset)\", \"device_name\", \"^$\")",
+          "legendFormat": "{{device_name}}" }
       ]
     }
   ]

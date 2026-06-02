@@ -2,6 +2,11 @@ receivers:
   otlp:
     protocols:
       grpc:
+        # 0.0.0.0 accepts hub-local (127.0.0.1) AND fleet devices over Tailscale.
+        # We deliberately do NOT bind the Tailscale IP directly: it is dynamic
+        # (already changed <tailscale-ip> -> <tailscale-ip>) and binding a specific
+        # tailscale IP makes the collector crash whenever Tailscale re-keys.
+        # Access control is the Tailscale ACL layer (+ optional host firewall).
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
@@ -11,17 +16,17 @@ processors:
     timeout: 10s
 
 exporters:
-  # Exposes a /metrics endpoint that Prometheus scrapes.
   prometheus:
-    endpoint: 0.0.0.0:8889
-    # Promote Claude Code's resource attributes (user.email, account uuid,
-    # organization id, model, etc.) to Prometheus labels so you can group by account.
+    # Hardened: bound to localhost so only the local Prometheus can scrape the raw
+    # account-labeled metrics. Fleet devices send IN via OTLP; they cannot read this.
+    endpoint: 127.0.0.1:8889
+    # Promotes OTLP resource attributes to Prometheus labels:
+    #   device.name -> device_name,  os.user -> os_user  (per-device/per-os-user tagging)
     resource_to_telemetry_conversion:
       enabled: true
     enable_open_metrics: true
-  # Mirrors everything to the collector log for quick eyeballing / debugging.
   debug:
-    verbosity: detailed
+    verbosity: normal
 
 service:
   pipelines:

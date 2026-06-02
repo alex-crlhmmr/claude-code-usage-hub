@@ -9,6 +9,10 @@
 /local/grafana-data/
 /local/grafana-logs/
 
+# secrets (never commit)
+.secrets.env
+*.secret
+
 # scratch
 *.output
 *.tmp
@@ -17,3 +21,7 @@
 # configs:   *.yaml *.yml   |  scripts: *.sh *.py  |  .vers  |  README.md
 # dashboards: /local/grafana-dashboards/**
 # provisioning: /local/grafana-provisioning/**  (datasource + dashboard provider)
+
+# python bytecode
+__pycache__/
+*.pyc

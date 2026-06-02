@@ -1,58 +1,74 @@
-# Claude Code → OpenTelemetry → Prometheus → Grafana
+# Claude Code usage telemetry hub
 
-Self-hosted, local-only usage tracking for Claude Code on this machine.
-Captures token usage **tagged by account** (`user.email`, account uuid, org id, model),
-so usage on this shared box can be split per account going forward.
+Self-hosted, no-sudo, no-Docker stack that tracks Claude Code **token/cost usage per
+account — and, across a Tailscale fleet, per device and per OS-user.** One machine
+(`YOUR-HUB`) hosts everything; other machines stream their Claude Code telemetry to it.
 
-## Pieces
-- **OTel Collector** receives OTLP from Claude Code on `localhost:4317`, exposes Prometheus metrics on `:8889`.
-- **Prometheus** scrapes the collector and stores the time series.
-- **Grafana** (http://localhost:3000) visualizes it. Anonymous viewing is on; admin login is `admin` / `admin`.
+```
+  fleet devices (Mac, Jetson, …)                 HUB  (YOUR-HUB)
+  Claude Code, TELEMETRY=1        OTLP/gRPC       OTel Collector  :4317/:4318
+  + device.name + os.user   ───────over──────►      └─ resource→label
+  (account labels automatic)     Tailscale        Prometheus (TSDB) :9090  (365d)
+                                                  Grafana :3000  (dashboard)
+```
 
-Claude Code is already wired to this — `~/.claude/settings.json` sets
-`CLAUDE_CODE_ENABLE_TELEMETRY=1` and `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317`.
+## Components (all on the hub)
+| Service | Bind | Role |
+|---------|------|------|
+| OTel Collector | `0.0.0.0:4317` gRPC, `:4318` HTTP | Ingest from hub + fleet; promotes `device.name`→`device_name`, `os.user`→`os_user`; exposes `127.0.0.1:8889` |
+| Prometheus | `127.0.0.1:9090` | TSDB, scrapes collector every 15s, **365d retention** |
+| Grafana | `0.0.0.0:3000` | Dashboard `claude-code-usage`, anon view, admin pw in `.secrets.env` |
 
-## Start (Docker path)
-If Docker isn't installed yet, install it once (run in the Claude prompt with the `!` prefix so it's interactive for the password):
+## Identity / accounting model
+- **Canonical per-account key = `user_account_uuid`** (immutable; `user_email` is display-only).
+- **Composite series identity = (user_account_uuid, device_name, os_user)** — orthogonal labels, so you can group by account, by device, or both.
+- Account labels (`user_account_uuid`, `user_email`, `organization_id`) are emitted **automatically** by Claude Code. Only `device.name` + `os.user` are added per device.
+- **Attribution follows the account a session is LAUNCHED with.** A mid-session `/login` does NOT reliably re-tag. Rule: one Claude account per person, each launches their own session.
+- Irreducible case: two humans sharing ONE account AND ONE OS login → indistinguishable (data loss). Fixed only by policy (one account per person; distinct OS logins as a backstop that `os_user` then splits).
 
-    ! sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 && sudo usermod -aG docker $USER
+## Add a device to the fleet
+On the device (must be on the `alex@` tailnet, MagicDNS on):
+```bash
+scp YOUR-HUB.tailNNNN.ts.net:~/otel-claude/join-fleet.sh .   # or copy it over
+./join-fleet.sh                 # auto device.name=$(hostname -s), os.user=$(id -un)
+./join-fleet.sh --dry-run       # preview the settings.json change first
+```
+Then **restart Claude Code** (new session). It streams to the hub; within ~25s it appears
+on the dashboard, split by device and account. Endpoint used:
+`http://YOUR-HUB.tailNNNN.ts.net:4317` (MagicDNS — survives hub IP changes).
 
-Log out/in (or `newgrp docker`) so the group takes effect, then:
+## View / query
+- Grafana:    http://localhost:3000/d/claude-code-usage  (or `:3000` over LAN/Tailscale)
+- `python3 query.py [window]`            — per-account totals (default 30d)
+- `python3 query.py 7d --by-device`      — per account x device x os_user
+- `python3 verify-fleet.py [window]`     — fleet table + integrity checks (fan-out, un-joined, reconciliation)
 
-    cd ~/otel-claude
-    docker compose up -d
-    docker compose logs -f collector   # watch metrics arrive
+Key PromQL (genuine accounts only; `<UUID>` = `user_account_uuid=~"[0-9a-f]{8}-...":`):
+```promql
+# per device per account
+sum by (device_name, user_account_uuid, user_email) (increase(claude_code_token_usage_tokens_total{<UUID>}[1d]))
+# per account across all devices
+sum by (user_account_uuid, user_email) (increase(claude_code_cost_usage_USD_total{<UUID>}[1d]))
+# per device, all accounts
+sum by (device_name) (increase(claude_code_cost_usage_USD_total{<UUID>}[1d]))
+```
 
-Then **start a fresh Claude Code session** (env vars are read at launch) and do anything.
-Within ~10s the collector log shows `claude_code.token.usage` records.
+## Manage
+```bash
+./start.sh     # idempotent; also armed via crontab @reboot
+./stop.sh
+```
 
-## View
-- Grafana:    http://localhost:3000  (add panels using the queries below)
-- Prometheus: http://localhost:9090  (quick ad-hoc queries)
-- Raw feed:   http://localhost:8889/metrics
-
-## Key metric
-`claude_code_token_usage_tokens_total` — counter of tokens, with labels including:
-`user_email`, `model`, `type` (input/output/cacheRead/cacheCreation), `session_id`, plus account/org ids.
-
-### PromQL — tokens per account, per day
-    sum by (user_email) (increase(claude_code_token_usage_tokens_total[1d]))
-
-### Tokens per account split by type
-    sum by (user_email, type) (increase(claude_code_token_usage_tokens_total[1d]))
-
-### Cost per account, per day (USD)
-    sum by (user_email) (increase(claude_code_cost_usage_USD_total[1d]))
-
-### Output tokens only (the real "work" signal), per account
-    sum by (user_email) (increase(claude_code_token_usage_tokens_total{type="output"}[1d]))
-
-## Stop / reset
-    docker compose down            # stop, keep data
-    docker compose down -v         # stop and wipe stored metrics
+## Security posture (honest)
+- **Transport:** Tailscale (private, encrypted). The OTLP ports are `0.0.0.0` (so they keep
+  working when the dynamic Tailscale IP changes), which means they are **also reachable on the
+  LAN, unauthenticated.** Lock down with a **Tailscale ACL** (only tailnet members → hub:4317,4318)
+  and/or a host firewall (`sudo ufw allow in on tailscale0 to any port 4317,4318` + deny elsewhere).
+- Prometheus exposition (`:8889`) and Prometheus itself (`:9090`) are localhost-only.
+- Grafana admin password is in `.secrets.env` (gitignored); anonymous viewing is on.
 
 ## Notes
-- This only sees Claude Code launched **on this machine**. Other machines need their own setup.
-- Metric/label names are normalized by the Prometheus exporter (dots → underscores). If a query
-  returns nothing, check the exact names at http://localhost:8889/metrics first.
-- Historical usage (before telemetry was enabled) is NOT backfilled — tracking starts now.
+- Only captures Claude Code on machines that have joined. No backfill of pre-telemetry usage.
+- `bin/` and `dl/` (binaries, ~1.5GB) and `local/*-data` (the databases) are gitignored — re-`start.sh` re-creates runtime state; binaries re-download from `.vers`.
+- `session_id` is kept as a label (forensic drilldown); fine at fleet scale. Dropping it for cardinality is a future option but risks duplicate-series at scrape, so it is intentionally not done here.
+- The `docker-compose.yml` + `grafana/` dir are an unused alternate (Docker) path.
