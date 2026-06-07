@@ -35,7 +35,8 @@ Requirements: Linux, `curl`, `python3`, `tar`, a user `systemd` instance (for au
 ## B. Join a device to the fleet
 
 The device must be on the **same tailnet** as the hub (with MagicDNS). Replace `HUB` with your
-hub's Tailscale name (from `tailscale status`, e.g. `YOUR-HUB.tailNNNN.ts.net`).
+hub's Tailscale name (from `tailscale status`, e.g. `YOUR-HUB.tailNNNN.ts.net`). Get the script
+by cloning this repo (`git clone <repo>`) or `scp`-ing it from the hub — either works.
 
 **macOS / Linux** — one script, two modes (see B2):
 ```bash
@@ -112,6 +113,26 @@ Residual gaps that **remain even in reliable mode** (no system avoids all of the
 - **Device powered off** — no telemetry is generated while off, so nothing to lose; gaps there are expected, not lost work.
 
 Bottom line: reliable mode closes the big real-world hole (transient hub/network outages, like the ~100‑min gap that prompted this) and is durable across reboots. Treat it as **near‑lossless**, not a mathematical zero‑loss guarantee — for the latter you'd also need hub TSDB backups and per‑device disk redundancy.
+
+---
+
+## B3. Remove a device / uninstall
+
+Reverses everything on a device (stops + deletes the local agent, removes the service, strips the
+telemetry config so Claude Code stops sending):
+
+```bash
+# macOS / Linux
+./device-setup.sh --uninstall          # then restart Claude Code
+
+# Windows (PowerShell)
+.\device-setup.ps1 -Uninstall          # then restart Claude Code
+```
+
+**Note on the copied script:** the `device-setup.sh` you `scp`/clone onto a device is just the
+installer — the running agent is self-contained in `~/.claude-otel-agent/` (its own binary +
+config), so you can delete the copied script after installing. Keep it (or re-fetch it) if you
+want to `--uninstall` later. Nothing on the **hub** is touched by device install/uninstall.
 
 ---
 

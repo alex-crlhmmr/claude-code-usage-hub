@@ -22,6 +22,7 @@ Usage: $0 --hub HOST [--name NAME] [--direct] [--no-verify] [--dry-run]
   --name NAME    device label (default: hostname -s)
   --direct       best-effort mode (no local agent; drops during outages)
   --reliable     spool-and-forward mode (default; never drops)
+  --uninstall    remove the local agent + telemetry config from this device
   --no-verify    skip hub connectivity check
   --dry-run      show what would change, do nothing
 EOF
@@ -33,21 +34,56 @@ while [ $# -gt 0 ]; do case "$1" in
   --version) [ $# -ge 2 ] || die "--version needs a value"; OTEL_VER="$2"; shift 2;;
   --direct|--best-effort) MODE="direct"; shift;;
   --reliable) MODE="reliable"; shift;;
+  --uninstall) MODE="uninstall"; shift;;
   --no-verify) NO_VERIFY=1; shift;;
   --dry-run) DRY_RUN=1; shift;;
   -h|--help) usage; exit 0;;
   *) die "unknown argument: $1 (see --help)";;
 esac; done
 
-case "$HUB_HOST" in *YOUR-HUB*) die "set your hub: $0 --hub <your-hub.tailXXXX.ts.net>  (run 'tailscale status' on the hub)";; esac
 command -v python3 >/dev/null || die "python3 required"
-command -v curl    >/dev/null || die "curl required"
-[ -n "$DEVICE_NAME" ] || DEVICE_NAME="$(hostname -s 2>/dev/null || hostname)"
-OS_USER="$(id -un)"
-
 OS="$(uname -s)"; M="$(uname -m)"
 case "$M" in x86_64|amd64) ARCH=amd64;; aarch64|arm64) ARCH=arm64;; *) die "unsupported arch: $M";; esac
 case "$OS" in Linux) PLAT=linux;; Darwin) PLAT=darwin;; *) die "Linux/macOS only (this is $OS; use device-setup.ps1 on Windows)";; esac
+
+# ---- uninstall: stop+remove the agent and strip telemetry from settings.json ----
+if [ "$MODE" = uninstall ]; then
+  echo "Uninstalling Claude Code telemetry from this device..."
+  if [ "$PLAT" = linux ]; then
+    systemctl --user disable --now claude-otel-agent.service 2>/dev/null || true
+    rm -f "$HOME/.config/systemd/user/claude-otel-agent.service"
+    systemctl --user daemon-reload 2>/dev/null || true
+  else
+    PL="$HOME/Library/LaunchAgents/com.claudecode.otelagent.plist"
+    launchctl unload "$PL" 2>/dev/null || true; rm -f "$PL"
+  fi
+  rm -rf "$AGENTDIR"
+  [ -f "$SETTINGS" ] && cp "$SETTINGS" "$SETTINGS.bak.$(date +%Y%m%d%H%M%S 2>/dev/null || echo bak)" 2>/dev/null || true
+  python3 - "$SETTINGS" <<'PY'
+import json,os,sys,tempfile,stat
+path=sys.argv[1]
+try: d=json.load(open(path))
+except FileNotFoundError: sys.exit("no settings.json — nothing to remove.")
+env=d.get("env",{}) if isinstance(d.get("env"),dict) else {}
+for k in ("CLAUDE_CODE_ENABLE_TELEMETRY","OTEL_METRICS_EXPORTER","OTEL_LOGS_EXPORTER",
+          "OTEL_EXPORTER_OTLP_PROTOCOL","OTEL_METRIC_EXPORT_INTERVAL",
+          "OTEL_EXPORTER_OTLP_ENDPOINT","OTEL_RESOURCE_ATTRIBUTES"): env.pop(k,None)
+if env: d["env"]=env
+else: d.pop("env",None)
+dd=os.path.dirname(os.path.abspath(path)) or "."
+fd,tmp=tempfile.mkstemp(dir=dd,prefix=".settings.",suffix=".tmp")
+with os.fdopen(fd,"w") as f: f.write(json.dumps(d,indent=2)+"\n")
+os.chmod(tmp, stat.S_IMODE(os.stat(path).st_mode)); os.replace(tmp,path)
+print("Removed telemetry env from settings.json.")
+PY
+  echo "Done. Removed agent ($AGENTDIR) + service. RESTART Claude Code to stop sending telemetry."
+  exit 0
+fi
+
+case "$HUB_HOST" in *YOUR-HUB*) die "set your hub: $0 --hub <your-hub.tailXXXX.ts.net>  (run 'tailscale status' on the hub)";; esac
+command -v curl >/dev/null || die "curl required"
+[ -n "$DEVICE_NAME" ] || DEVICE_NAME="$(hostname -s 2>/dev/null || hostname)"
+OS_USER="$(id -un)"
 
 echo "Device : $DEVICE_NAME ($PLAT/$ARCH)"
 echo "Hub    : $HUB_HOST:4317"

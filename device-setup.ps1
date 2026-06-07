@@ -3,15 +3,32 @@
 # Usage (PowerShell):
 #   .\device-setup.ps1 -Hub YOUR-HUB.tailNNNN.ts.net   (your hub's Tailscale name: run 'tailscale status')
 #   .\device-setup.ps1 -DryRun          # preview the settings.json change, write nothing
+#   .\device-setup.ps1 -Uninstall       # remove telemetry config from this device
 # NOTE: tested logic, but run with -DryRun first to confirm the merge on your machine.
 #       If anything looks off, use the manual settings.json block from the README instead.
 param(
   [string]$Name    = $env:COMPUTERNAME,
   [string]$Hub     = "YOUR-HUB.tailNNNN.ts.net",
   [switch]$DryRun,
-  [switch]$NoVerify
+  [switch]$NoVerify,
+  [switch]$Uninstall
 )
 $ErrorActionPreference = "Stop"
+$settings = Join-Path $env:USERPROFILE ".claude\settings.json"
+if ($Uninstall) {
+  if (Test-Path $settings) {
+    Copy-Item $settings ("$settings.bak." + (Get-Date -Format "yyyyMMddHHmmss"))
+    $j = Get-Content -Raw $settings | ConvertFrom-Json
+    if ($j.PSObject.Properties.Name -contains "env") {
+      foreach ($k in 'CLAUDE_CODE_ENABLE_TELEMETRY','OTEL_METRICS_EXPORTER','OTEL_LOGS_EXPORTER','OTEL_EXPORTER_OTLP_PROTOCOL','OTEL_METRIC_EXPORT_INTERVAL','OTEL_EXPORTER_OTLP_ENDPOINT','OTEL_RESOURCE_ATTRIBUTES') {
+        if ($j.env.PSObject.Properties.Name -contains $k) { $j.env.PSObject.Properties.Remove($k) }
+      }
+      $j | ConvertTo-Json -Depth 30 | Set-Content -Path $settings -Encoding UTF8
+    }
+    Write-Host "Removed telemetry env from settings.json. RESTART Claude Code."
+  } else { Write-Host "No settings.json - nothing to remove." }
+  exit 0
+}
 if ($Hub -like "*YOUR-HUB*") { Write-Error "Set your hub: .\device-setup.ps1 -Hub <your-hub.tailXXXX.ts.net>  (run 'tailscale status')"; exit 1 }
 $grpc = 4317; $http = 4318
 $settings = Join-Path $env:USERPROFILE ".claude\settings.json"
