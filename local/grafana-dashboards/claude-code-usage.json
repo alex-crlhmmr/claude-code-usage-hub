@@ -93,7 +93,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum(increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "expr": "sum(increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "USD" }
       ]
     },
@@ -113,7 +113,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum(increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "tokens" }
       ]
     },
@@ -133,7 +133,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"output\", user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"output\", user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "output" }
       ]
     },
@@ -153,7 +153,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\", user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\", user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "cacheRead" }
       ]
     },
@@ -173,7 +173,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "count(count by (user_account_uuid) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\"}[$__range]) > 0))",
+          "expr": "count(count by (user_account_uuid) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", device_name=~\"$device\"}[$__range]) > 0))",
           "legendFormat": "accounts" }
       ]
     },
@@ -193,7 +193,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum(increase(claude_code_active_time_seconds_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\"}[$__range]))",
+          "expr": "sum(increase(claude_code_active_time_seconds_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "active" }
       ]
     },
@@ -229,7 +229,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__rate_interval]))",
+          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__rate_interval]))",
           "legendFormat": "{{user_email}}" }
       ]
     },
@@ -256,7 +256,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__rate_interval]))",
+          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__rate_interval]))",
           "legendFormat": "{{user_email}}" }
       ]
     },
@@ -292,7 +292,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum by (user_account_uuid, user_email) (rate(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__rate_interval])) * 3600",
+          "expr": "sum by (user_account_uuid, user_email) (rate(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__rate_interval])) * 3600",
           "legendFormat": "{{user_email}}" }
       ]
     },
@@ -315,7 +315,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum by (type) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "expr": "sum by (type) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "{{type}}" }
       ]
     },
@@ -340,7 +340,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum by (model) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "expr": "sum by (model) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "{{model}}" }
       ]
     },
@@ -360,7 +360,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_token_usage_tokens_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "{{user_email}}" }
       ]
     },
@@ -380,7 +380,7 @@
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
-          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\"}[$__range]))",
+          "expr": "sum by (user_account_uuid, user_email) (increase(claude_code_cost_usage_USD_total{user_account_uuid=~\"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\", user_email=~\"$account\", model=~\"$model\", device_name=~\"$device\"}[$__range]))",
           "legendFormat": "{{user_email}}" }
       ]
     },
