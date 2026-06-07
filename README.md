@@ -37,18 +37,19 @@ Requirements: Linux, `curl`, `python3`, `tar`, a user `systemd` instance (for au
 The device must be on the **same tailnet** as the hub (with MagicDNS). Replace `HUB` with your
 hub's Tailscale name (from `tailscale status`, e.g. `YOUR-HUB.tailNNNN.ts.net`).
 
-**macOS / Linux:**
+**macOS / Linux** — one script, two modes (see B2):
 ```bash
-scp HUB:~/otel-claude/join-fleet.sh .
-./join-fleet.sh --hub HUB            # add --dry-run to preview first
+scp HUB:~/otel-claude/device-setup.sh .
+./device-setup.sh --hub HUB           # RELIABLE mode (default; never drops on outage)
+./device-setup.sh --hub HUB --direct  # best-effort (no local agent; lighter)
 ```
 
 **Windows (PowerShell):**
 ```powershell
-# copy join-fleet.ps1 from the hub, then:
-.\join-fleet.ps1 -Hub HUB            # add -DryRun to preview first
+# copy device-setup.ps1 from the hub, then:
+.\device-setup.ps1 -Hub HUB           # best-effort (Windows reliable mode not yet scripted)
 ```
-(Or use WSL / Git Bash and run `join-fleet.sh`.)
+(Or use WSL / Git Bash and run `device-setup.sh`.)
 
 **Any OS — foolproof manual way:** add this `env` block to your Claude Code settings file
 (`~/.claude/settings.json` on macOS/Linux, `%USERPROFILE%\.claude\settings.json` on Windows),
@@ -84,9 +85,10 @@ Claude Code → local agent (localhost) → disk queue → hub
                          └─ hub down? queue grows on disk, drains automatically later
 ```
 
-Enable it on a device (Linux/macOS; instead of, or after, `join-fleet.sh`):
+Reliable mode is the **default** of `device-setup.sh` (use `--direct` to opt out):
 ```bash
-./install-device-agent.sh --hub YOUR-HUB.tailNNNN.ts.net   # then restart Claude Code
+./device-setup.sh --hub YOUR-HUB.tailNNNN.ts.net          # reliable (default); then restart Claude Code
+./device-setup.sh --hub YOUR-HUB.tailNNNN.ts.net --direct # best-effort instead
 ```
 It downloads a small collector, installs it as an always-on service (systemd `--user` /
 launchd, auto-restart), points Claude Code at `localhost:4317`, and forwards to the hub with a

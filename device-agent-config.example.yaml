@@ -1,5 +1,5 @@
 # Reference config for the per-device "reliable mode" agent.
-# install-device-agent.sh generates this automatically (substituting your hub + paths);
+# device-setup.sh (reliable mode) generates this automatically (substituting your hub + paths);
 # shown here for reference. Claude Code -> this agent (localhost) -> spool to disk -> hub.
 extensions:
   file_storage/queue:

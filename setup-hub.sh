@@ -48,7 +48,7 @@ if [ ! -f .secrets.env ]; then
   echo "Generated Grafana admin password -> .secrets.env (applied on first Grafana init)."
 fi
 
-chmod +x start.sh stop.sh join-fleet.sh query.py verify-fleet.py install-systemd.sh 2>/dev/null || true
+chmod +x start.sh stop.sh device-setup.sh query.py verify-fleet.py install-systemd.sh 2>/dev/null || true
 
 # --- start + persistence: prefer systemd --user (auto-restart on crash + boot), else setsid+cron ---
 if systemctl --user is-system-running >/dev/null 2>&1; then
@@ -69,8 +69,8 @@ echo
 echo "HUB READY."
 if [ -n "$HUB_DNS" ]; then
   echo "  Tailscale hub name: $HUB_DNS"
-  echo "  Devices join with:  ./join-fleet.sh --hub $HUB_DNS   (Windows: .\\join-fleet.ps1 -Hub $HUB_DNS)"
+  echo "  Devices join with:  ./device-setup.sh --hub $HUB_DNS   (Windows: .\\device-setup.ps1 -Hub $HUB_DNS)"
 else
-  echo "  Find this hub's Tailscale name with: tailscale status   then devices: ./join-fleet.sh --hub <name>"
+  echo "  Find this hub's Tailscale name with: tailscale status   then devices: ./device-setup.sh --hub <name>"
 fi
 echo "  Grafana: http://localhost:3000  (admin password in .secrets.env)"
