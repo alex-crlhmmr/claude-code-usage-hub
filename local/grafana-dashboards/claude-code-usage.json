@@ -86,7 +86,7 @@
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "background_solid",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "textMode": "value_and_name",
         "wideLayout": true
@@ -109,7 +109,7 @@
       },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "colorMode": "background_solid", "graphMode": "area", "textMode": "value_and_name", "wideLayout": true
+        "colorMode": "background_solid", "graphMode": "none", "textMode": "value_and_name", "wideLayout": true
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
@@ -129,7 +129,7 @@
       },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "colorMode": "background_solid", "graphMode": "area", "textMode": "value_and_name", "wideLayout": true
+        "colorMode": "background_solid", "graphMode": "none", "textMode": "value_and_name", "wideLayout": true
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
@@ -149,7 +149,7 @@
       },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "colorMode": "background_solid", "graphMode": "area", "textMode": "value_and_name", "wideLayout": true
+        "colorMode": "background_solid", "graphMode": "none", "textMode": "value_and_name", "wideLayout": true
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
@@ -189,7 +189,7 @@
       },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "colorMode": "background_solid", "graphMode": "area", "textMode": "value_and_name", "wideLayout": true
+        "colorMode": "background_solid", "graphMode": "none", "textMode": "value_and_name", "wideLayout": true
       },
       "targets": [
         { "refId": "A", "datasource": { "type": "prometheus", "uid": "ccprom" },
